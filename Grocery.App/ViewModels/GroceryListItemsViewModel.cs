@@ -15,7 +15,7 @@ namespace Grocery.App.ViewModels
         private readonly IGroceryListItemsService _groceryListItemsService;
         private readonly IProductService _productService;
         private readonly IFileSaverService _fileSaverService;
-        
+
         public ObservableCollection<GroceryListItem> MyGroceryListItems { get; set; } = [];
         public ObservableCollection<Product> AvailableProducts { get; set; } = [];
 
@@ -23,6 +23,24 @@ namespace Grocery.App.ViewModels
         GroceryList groceryList = new(0, "None", DateOnly.MinValue, "", 0);
         [ObservableProperty]
         string myMessage;
+        [ObservableProperty]
+        string searchTerm = string.Empty;
+
+        [RelayCommand]
+        public void Search(string term)
+        {
+            string searchTerm = term;
+            AvailableProducts.Clear();
+            foreach (Product p in _productService.GetAll())
+            {
+                if (p.Stock > 0
+                    && (string.IsNullOrWhiteSpace(term) || p.Name.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    && MyGroceryListItems.FirstOrDefault(g => g.ProductId == p.Id) == null)
+                {
+                    AvailableProducts.Add(p);
+                }
+            }
+        }
 
         public GroceryListItemsViewModel(IGroceryListItemsService groceryListItemsService, IProductService productService, IFileSaverService fileSaverService)
         {
